@@ -1,4 +1,4 @@
-﻿/**
+/**
  * app.js — Portfolio data and dynamic rendering logic
  * Author: Udoka Ogan
  *
@@ -101,8 +101,86 @@ function renderProjects(containerId) {
   console.log("[renderProjects] Done. All cards injected into #" + containerId);
 }
 
+// ─── CONTACT SECTION ADAPTATION ──────────────────────────────────────────────
+
+const CONTACT_EMAIL = "oganudoka204@gmail.com";
+const GMAIL_COMPOSE_URL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CONTACT_EMAIL)}`;
+const MAILTO_URL = `mailto:${CONTACT_EMAIL}`;
+
+const MAIL_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`;
+
+const EXTERNAL_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>`;
+
+/**
+ * Detects whether the visitor is using a mobile phone.
+ * Combines User-Agent sniffing, navigator.userAgentData, and coarse pointer / narrow viewport heuristics.
+ * @returns {boolean}
+ */
+function isMobilePhone() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera || "";
+  const mobileRegex = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  const isMobileUA = mobileRegex.test(userAgent);
+  const isMobileClientHint = Boolean(navigator.userAgentData && navigator.userAgentData.mobile);
+  const hasCoarsePointer = Boolean(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  const isSmallScreen = Boolean(window.matchMedia && window.matchMedia("(max-width: 768px)").matches);
+
+  return isMobileUA || isMobileClientHint || (hasCoarsePointer && isSmallScreen);
+}
+
+/**
+ * Updates contact section buttons depending on mobile phone vs. desktop/laptop environment.
+ */
+function updateContactEmailButtons() {
+  const primaryBtn = document.getElementById("contact-primary-email");
+  const secondaryBtn = document.getElementById("contact-secondary-email");
+
+  if (!primaryBtn || !secondaryBtn) return;
+
+  const isMobile = isMobilePhone();
+
+  if (isMobile) {
+    // Mobile phones:
+    // Primary: "Open Email App" -> mailto link
+    // Secondary: "Use Gmail in Browser" -> Gmail web compose
+    primaryBtn.href = MAILTO_URL;
+    primaryBtn.removeAttribute("target");
+    primaryBtn.removeAttribute("rel");
+    primaryBtn.setAttribute("aria-label", "Open Email App with oganudoka204@gmail.com");
+    primaryBtn.innerHTML = `${MAIL_ICON_SVG}<span>Open Email App</span>`;
+
+    secondaryBtn.href = GMAIL_COMPOSE_URL;
+    secondaryBtn.target = "_blank";
+    secondaryBtn.rel = "noopener noreferrer";
+    secondaryBtn.setAttribute("aria-label", "Use Gmail in Browser to email oganudoka204@gmail.com");
+    secondaryBtn.innerHTML = `${EXTERNAL_ICON_SVG}<span>Use Gmail in Browser</span>`;
+  } else {
+    // Desktop / laptops:
+    // Primary: "Send Email with Gmail" -> Gmail web compose
+    // Secondary: "Use Desktop Email App" -> mailto link
+    primaryBtn.href = GMAIL_COMPOSE_URL;
+    primaryBtn.target = "_blank";
+    primaryBtn.rel = "noopener noreferrer";
+    primaryBtn.setAttribute("aria-label", "Send Email with Gmail to oganudoka204@gmail.com");
+    primaryBtn.innerHTML = `${MAIL_ICON_SVG}<span>Send Email with Gmail</span>`;
+
+    secondaryBtn.href = MAILTO_URL;
+    secondaryBtn.removeAttribute("target");
+    secondaryBtn.removeAttribute("rel");
+    secondaryBtn.setAttribute("aria-label", "Use Desktop Email App to email oganudoka204@gmail.com");
+    secondaryBtn.innerHTML = `${EXTERNAL_ICON_SVG}<span>Use Desktop Email App</span>`;
+  }
+}
+
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
   renderProjects("projects-grid");
+  updateContactEmailButtons();
+
+  // Listen for window resize or viewport changes to adapt dynamically if device mode changes
+  window.addEventListener("resize", updateContactEmailButtons);
+  if (window.matchMedia) {
+    window.matchMedia("(max-width: 768px)").addEventListener("change", updateContactEmailButtons);
+    window.matchMedia("(pointer: coarse)").addEventListener("change", updateContactEmailButtons);
+  }
 });
